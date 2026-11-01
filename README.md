@@ -121,3 +121,11 @@ python tests\test_debugmcp.py         :: 21 end-to-end scenarios over MCP (or pa
 python tests\test_unreal.py           :: optional; needs DEBUGMCP_UE_ROOT pointing at a UE build with PDBs
 python tests\mcp_client.py launch "{\"program\":\"...\"}" locals "{}"   :: ad-hoc tool calls
 ```
+
+## License
+
+debugmcp is released into the public domain under [the Unlicense](LICENSE).
+
+Exception: `third_party/json.hpp` ([nlohmann/json](https://github.com/nlohmann/json)) remains
+under its own MIT license, stated in the file header. DbgEng is not part of this repository.
+`scripts\setup-runtime.ps1` copies it from your own WinDbg installation, under Microsoft's terms.
