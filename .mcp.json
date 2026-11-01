@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "debugmcp": {
+      "command": "D:\\debugmcp\\bin\\debugmcp.exe",
+      "args": []
+    }
+  }
+}
