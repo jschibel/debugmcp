@@ -1653,11 +1653,7 @@ std::string Debugger::PatchNatvis(const std::string& path) {
         if (!unresolved) patched_natvis_[path] = path;  // nothing to do; retry later if unresolved
         return path;
     }
-    char local[MAX_PATH];
-    std::string dir = "C:\\Temp";
-    if (GetEnvironmentVariableA("LOCALAPPDATA", local, sizeof(local))) dir = std::string(local) + "\\debugmcp";
-    CreateDirectoryA(dir.c_str(), nullptr);
-    dir += "\\natvis";
+    std::string dir = DataDir() + "\\natvis";
     CreateDirectoryA(dir.c_str(), nullptr);
     size_t slash = path.find_last_of("\\/");
     std::string base = slash == std::string::npos ? path : path.substr(slash + 1);

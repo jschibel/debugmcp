@@ -124,10 +124,7 @@ std::string DefaultSymbolPath() {
     char env[8192];
     if (GetEnvironmentVariableA("DEBUGMCP_SYMBOL_PATH", env, sizeof(env))) return env;
     if (GetEnvironmentVariableA("_NT_SYMBOL_PATH", env, sizeof(env))) return env;
-    char local[MAX_PATH];
-    std::string cache = "C:\\symbols";
-    if (GetEnvironmentVariableA("LOCALAPPDATA", local, sizeof(local)))
-        cache = std::string(local) + "\\debugmcp\\symcache";
+    std::string cache = DataDir() + "\\symcache";
     return "cache*" + cache + ";srv*" + cache + "*https://msdl.microsoft.com/download/symbols";
 }
 

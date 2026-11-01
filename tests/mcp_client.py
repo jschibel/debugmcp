@@ -17,6 +17,38 @@ class McpError(Exception):
     pass
 
 
+def _run_cmd(script):
+    print(f"[setup] running {os.path.relpath(script, ROOT)} ...", flush=True)
+    r = subprocess.run(["cmd.exe", "/d", "/c", script], cwd=os.path.dirname(script))
+    if r.returncode != 0:
+        raise SystemExit(f"{script} failed with exit code {r.returncode}")
+
+
+def _stale(outputs, inputs):
+    if not all(os.path.exists(o) for o in outputs):
+        return True
+    newest_in = max(os.path.getmtime(i) for i in inputs)
+    return min(os.path.getmtime(o) for o in outputs) < newest_in
+
+
+def ensure_server_built():
+    """Builds bin/debugmcp.exe (and fetches the DbgEng runtime) if missing or older than src/."""
+    src = os.path.join(ROOT, "src")
+    inputs = [os.path.join(src, f) for f in os.listdir(src)]
+    if _stale([EXE], inputs):
+        _run_cmd(os.path.join(ROOT, "build.cmd"))
+
+
+def ensure_targets_built():
+    """Builds the C++ test targets if missing or older than their sources."""
+    tdir = os.path.join(ROOT, "tests", "targets")
+    tbin = os.path.join(tdir, "bin")
+    outputs = [os.path.join(tbin, n) for n in ("basic.exe", "basic_opt.exe", "threads.exe", "plugin.dll")]
+    inputs = [os.path.join(tdir, n) for n in os.listdir(tdir) if n.endswith((".cpp", ".cmd"))]
+    if _stale(outputs, inputs):
+        _run_cmd(os.path.join(tdir, "build.cmd"))
+
+
 class Client:
     def __init__(self, exe=EXE):
         self.p = subprocess.Popen([exe], stdin=subprocess.PIPE, stdout=subprocess.PIPE,

@@ -19,26 +19,38 @@ Parallel Stacks, ...).
 
 ## Setup
 
-Requirements: Windows x64, Visual Studio 2022+ with the C++ toolset, WinDbg (installed from winget
-by the setup script if missing), Python 3 for the tests.
+Requirements: Windows 10/11 x64 and Visual Studio 2022+ (or Build Tools) with the "Desktop
+development with C++" workload. Python 3 is needed only for the tests. Clone anywhere, then from
+the clone (cmd, PowerShell, or a Developer Prompt):
 
 ```bat
-powershell -ExecutionPolicy Bypass -File scripts\setup-runtime.ps1   :: copy DbgEng from WinDbg into runtime\dbgeng
-build.cmd                                                             :: -> bin\debugmcp.exe   (build.cmd debug for /Od)
+build.cmd            :: -> bin\debugmcp.exe   (build.cmd debug for /Od /Zi)
 ```
 
-Re-run `setup-runtime.ps1` after updating WinDbg. The server looks for `dbgeng.dll` in
-`%DEBUGMCP_DBGENG_DIR%`, `<exe>\dbgeng`, then `<exe>\..\runtime\dbgeng`. It falls back to
-System32's copy, which is reduced: no natvis Visualizers and no symsrv.
+On the first build, `build.cmd` also runs `scripts\setup-runtime.ps1`. That script copies the
+DbgEng engine into `runtime\dbgeng`, from the first of:
+1. the installed WinDbg app,
+2. the Windows SDK's "Debugging Tools for Windows",
+3. WinDbg installed with `winget`.
+
+Re-run the script after updating WinDbg, or pass it `-Source <dir>` to choose an engine. The
+server looks for `dbgeng.dll` in `%DEBUGMCP_DBGENG_DIR%`, then `<exe>\dbgeng`, then
+`<exe>\..\runtime\dbgeng`. If none has it, it falls back to System32's copy, which is reduced: no
+natvis Visualizers and no symsrv.
+
+To ship it elsewhere, copy `bin\debugmcp.exe` together with `runtime\dbgeng` renamed to `dbgeng`
+next to the exe.
 
 ### Register with Claude Code
 
-This repo's `.mcp.json` registers it for sessions opened here. To use it from any project (e.g.
-your game or engine tree):
+Sessions opened in this repo pick it up from `.mcp.json` (relative `bin/debugmcp.exe`). To use it
+from any project (e.g. your game or engine tree), register the absolute path of your clone:
 
 ```bat
-claude mcp add --scope user debugmcp -- D:\debugmcp\bin\debugmcp.exe
+claude mcp add --scope user debugmcp -- "%CD%\bin\debugmcp.exe"
 ```
+
+(Run that from the clone's root. In PowerShell use `"$PWD\bin\debugmcp.exe"`.)
 
 Environment knobs: `DEBUGMCP_SYMBOL_PATH` (else `_NT_SYMBOL_PATH`, else the program dir plus the
 Microsoft symbol server cached in `%LOCALAPPDATA%\debugmcp\symcache`), `DEBUGMCP_DBGENG_DIR`.
@@ -116,9 +128,9 @@ $HITS`.
 ## Tests
 
 ```bat
-tests\targets\build.cmd               :: build test programs (Debug + /O2)
-python tests\test_debugmcp.py         :: 21 end-to-end scenarios over MCP (or pass name filters)
-python tests\test_unreal.py           :: optional; needs DEBUGMCP_UE_ROOT pointing at a UE build with PDBs
+python tests\test_debugmcp.py         :: 21 end-to-end scenarios over MCP (or pass name filters);
+                                      :: builds the server and test programs first if needed
+python tests\test_unreal.py           :: optional; skipped unless DEBUGMCP_UE_ROOT points at a UE build with PDBs
 python tests\mcp_client.py launch "{\"program\":\"...\"}" locals "{}"   :: ad-hoc tool calls
 ```
 

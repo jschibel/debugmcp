@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Same entry points a user runs on a fresh clone: build.cmd fetches DbgEng on first build,
+      # and the test runner builds the C++ test targets itself.
+      - name: Build
+        shell: cmd
+        run: build.cmd
+
+      - name: DbgEng runtime
+        shell: pwsh
+        run: |
+          if (-not (Test-Path runtime\dbgeng\dbgeng.dll)) { throw "runtime\dbgeng was not set up" }
+          Get-Content runtime\dbgeng\VERSION.txt
+
+      - name: Test
+        shell: cmd
+        run: python tests\test_debugmcp.py
+
+      - name: Unreal test (skips without an engine)
+        shell: cmd
+        run: python tests\test_unreal.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debugmcp
+          path: |
+            bin/debugmcp.exe
+            README.md
+            LICENSE

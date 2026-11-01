@@ -1,7 +1,9 @@
 """Optional large-scale integration test against a local Unreal Engine build (with PDBs).
 
-    set DEBUGMCP_UE_ROOT=D:\\UE\\Astrid        (directory containing Engine\\)
+    set DEBUGMCP_UE_ROOT=C:\\path\\to\\UnrealEngine   (directory containing Engine\\)
     python tests/test_unreal.py
+
+Skipped unless DEBUGMCP_UE_ROOT points at a source or installed engine with editor PDBs.
 
 Launches UnrealEditor-Cmd.exe with a nonexistent commandlet (engine init, then exit; no project
 files are modified) and checks: stop at WinMain, module-qualified/hyphenated breakpoints, source
@@ -13,10 +15,10 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from mcp_client import Client  # noqa: E402
+from mcp_client import Client, ensure_server_built  # noqa: E402
 
-ROOT = os.environ.get("DEBUGMCP_UE_ROOT", r"D:\UE\Astrid")
-EXE = os.path.join(ROOT, "Engine", "Binaries", "Win64", "UnrealEditor-Cmd.exe")
+ROOT = os.environ.get("DEBUGMCP_UE_ROOT", "")
+EXE = os.path.join(ROOT, "Engine", "Binaries", "Win64", "UnrealEditor-Cmd.exe") if ROOT else ""
 ARGS = ["-run=DebugMcpNoSuchCommandlet", "-nullrhi", "-unattended", "-nosplash", "-nopause"]
 
 
@@ -36,9 +38,13 @@ def timed(c, tool, args=None, limit=None):
 
 
 def main():
-    if not os.path.exists(EXE):
-        print(f"SKIP: {EXE} not found (set DEBUGMCP_UE_ROOT)")
+    if not ROOT:
+        print("SKIP: set DEBUGMCP_UE_ROOT to an Unreal Engine root (the directory containing Engine\\)")
         return
+    if not os.path.exists(EXE):
+        print(f"SKIP: {EXE} not found (build UnrealEditor-Cmd or fix DEBUGMCP_UE_ROOT)")
+        return
+    ensure_server_built()
     c = Client()
     try:
         r = timed(c, "launch", {"program": EXE, "args": ARGS, "frames": 1}, limit=30)

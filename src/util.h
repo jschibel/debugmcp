@@ -29,6 +29,8 @@ std::string NormalizeModuleQualifiers(const std::string& expr);
 std::string NormalizeModuleName(std::string name);
 // Absolute path with backslashes.
 std::string FullPath(const std::string& p);
+// Per-user data directory: %LOCALAPPDATA%\debugmcp, else <temp>\debugmcp (created on demand).
+std::string DataDir();
 
 // Private diagnostics log (our real stderr; the process-level stderr is
 // redirected so that debuggee output can be captured).

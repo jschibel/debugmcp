@@ -13,18 +13,20 @@ docs and tool list.
 ## Commands
 
 ```bat
-powershell -ExecutionPolicy Bypass -File scripts\setup-runtime.ps1  :: one-time: copy DbgEng from WinDbg into runtime\dbgeng
-build.cmd                     :: build bin\debugmcp.exe (Release /MT); "build.cmd debug" for /Od /Zi
-tests\targets\build.cmd       :: build the C++ test targets into tests\targets\bin (rebuild after editing them)
-python tests\test_debugmcp.py                 :: full end-to-end suite (~15 s)
+build.cmd                     :: build bin\debugmcp.exe (Release /MT); "build.cmd debug" for /Od /Zi.
+                              :: First build also runs scripts\setup-runtime.ps1 (DbgEng -> runtime\dbgeng)
+tests\targets\build.cmd       :: build the C++ test targets into tests\targets\bin
+python tests\test_debugmcp.py                 :: full end-to-end suite (~20 s); rebuilds server/targets if stale
 python tests\test_debugmcp.py logpoint data   :: run tests whose names contain these substrings
-python tests\test_unreal.py                   :: optional UE integration (DEBUGMCP_UE_ROOT, default D:\UE\Astrid)
+python tests\test_unreal.py                   :: optional UE integration; skipped unless DEBUGMCP_UE_ROOT is set
 python tests\mcp_client.py <tool> '<json>' [<tool> '<json>' ...]   :: ad-hoc calls against bin\debugmcp.exe
 ```
 
 Both build scripts find Visual Studio via `scripts\vcvars.cmd` (vswhere). From Git Bash, run them
-as `cmd //c "D:\\debugmcp\\build.cmd"`. A bare `cmd.exe /c build.cmd` hangs because of path
-conversion. Tests locate source lines through `LINE_*` marker comments in
+from the repo root as `cmd //c build.cmd`. A bare `cmd.exe /c build.cmd` hangs because MSYS
+converts `/c` to a path. Nothing in the repo may hard-code machine paths: per-user data goes
+through `DataDir()` (`%LOCALAPPDATA%\debugmcp`, else temp), and `.mcp.json` uses a repo-relative
+path. CI (`.github/workflows/ci.yml`) builds and runs the suite on a clean Windows runner. Tests locate source lines through `LINE_*` marker comments in
 `tests/targets/basic.cpp`, so keep those markers when editing targets. The server writes
 diagnostics to its real stderr, prefixed `[debugmcp]`; `Client.stderr_lines` collects them.
 

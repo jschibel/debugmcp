@@ -2,6 +2,8 @@
 
 Run all:     python tests/test_debugmcp.py
 Run some:    python tests/test_debugmcp.py logpoint data_breakpoint
+
+The server and the C++ test targets are (re)built automatically when missing or out of date.
 """
 import os
 import re
@@ -12,7 +14,7 @@ import time
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from mcp_client import Client  # noqa: E402
+from mcp_client import Client, ensure_server_built, ensure_targets_built  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TBIN = os.path.join(HERE, "targets", "bin")
@@ -454,6 +456,8 @@ TESTS = [v for k, v in list(globals().items()) if k.startswith("test_")]
 
 
 def main():
+    ensure_server_built()
+    ensure_targets_built()
     want = sys.argv[1:]
     tests = [t for t in TESTS if not want or any(w in t.__name__ for w in want)]
     failed = []

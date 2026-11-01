@@ -214,3 +214,19 @@ std::string FullPath(const std::string& p) {
     if (!n || n >= MAX_PATH * 4) return p;
     return Narrow(buf);
 }
+
+std::string DataDir() {
+    char buf[MAX_PATH];
+    std::string base;
+    DWORD n = GetEnvironmentVariableA("LOCALAPPDATA", buf, sizeof(buf));
+    if (n && n < sizeof(buf)) {
+        base = buf;
+    } else {
+        n = GetTempPathA(sizeof(buf), buf);
+        base = (n && n < sizeof(buf)) ? std::string(buf) : std::string(".");
+    }
+    while (!base.empty() && (base.back() == '\\' || base.back() == '/')) base.pop_back();
+    std::string dir = base + "\\debugmcp";
+    CreateDirectoryA(dir.c_str(), nullptr);
+    return dir;
+}
